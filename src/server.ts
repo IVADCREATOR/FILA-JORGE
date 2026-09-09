@@ -1,7 +1,9 @@
 import Fastify from "fastify";
+import cookie from "@fastify/cookie";
 import { runMigrations } from "./database/sqlite/migrate.js";
 import { healthRoutes } from "./api/health/routes.js";
 import { testItemsRoutes } from "./api/test-items/routes.js";
+import { authRoutes } from "./api/auth/routes.js";
 
 async function main() {
   // Migrations rodam ANTES do server aceitar tráfego.
@@ -11,10 +13,14 @@ async function main() {
 
   const app = Fastify({
     logger: true,
+    trustProxy: true, // necessário pra request.ip refletir o IP real atrás de proxy/load balancer
   });
+
+  await app.register(cookie);
 
   await app.register(healthRoutes, { prefix: "/api" });
   await app.register(testItemsRoutes, { prefix: "/api" });
+  await app.register(authRoutes, { prefix: "/api" });
 
   const port = Number(process.env.PORT ?? 3000);
 
