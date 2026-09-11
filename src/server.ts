@@ -1,9 +1,13 @@
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
+import cors from "@fastify/cors";
+import { config } from "./config/env.js";
 import { runMigrations } from "./database/sqlite/migrate.js";
-import { healthRoutes } from "./api/health/routes.js";
-import { testItemsRoutes } from "./api/test-items/routes.js";
-import { authRoutes } from "./api/auth/routes.js";
+import { healthRoutes } from "./api/v1/health/routes.js";
+import { testItemsRoutes } from "./api/v1/test-items/routes.js";
+import { authRoutes } from "./api/v1/auth/routes.js";
+import { applicationsRoutes } from "./api/v1/applications/routes.js";
+import { memoryRoutes } from "./api/v1/memory/routes.js";
 
 async function main() {
   // Migrations rodam ANTES do server aceitar tráfego.
@@ -18,13 +22,27 @@ async function main() {
 
   await app.register(cookie);
 
-  await app.register(healthRoutes, { prefix: "/api" });
-  await app.register(testItemsRoutes, { prefix: "/api" });
-  await app.register(authRoutes, { prefix: "/api" });
+  // CORS: só libera origens explicitamente confiáveis (CORS_TRUSTED_ORIGINS no .env).
+  // Sem isso configurado, só requests same-origin funcionam - o que é o
+  // comportamento seguro por padrão quando ainda não existe frontend externo.
+  await app.register(cors, {
+    origin(origin, callback) {
+      // origin undefined = request same-origin ou ferramenta tipo curl/Postman: permite.
+      if (!origin || config.cors.trustedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(new Error(`Origem não autorizada: ${origin}`), false);
+    },
+    credentials: true, // necessário pro cookie de sessão funcionar em requests cross-site autorizadas
+  });
 
-  const port = Number(process.env.PORT ?? 3000);
+  await app.register(healthRoutes, { prefix: "/api/v1" });
+  await app.register(testItemsRoutes, { prefix: "/api/v1" });
+  await app.register(authRoutes, { prefix: "/api/v1" });
+  await app.register(applicationsRoutes, { prefix: "/api/v1" });
+  await app.register(memoryRoutes, { prefix: "/api/v1" });
 
-  await app.listen({ port, host: "0.0.0.0" });
+  await app.listen({ port: config.server.port, host: "0.0.0.0" });
 }
 
 main().catch((err) => {

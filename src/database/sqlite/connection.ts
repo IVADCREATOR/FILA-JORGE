@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
+import { config } from "../../config/env.js";
 
 /**
  * Ponto único de acesso ao driver better-sqlite3.
@@ -14,7 +15,7 @@ let db: Database.Database | null = null;
 export function getDb(): Database.Database {
   if (db) return db;
 
-  const dbPath = process.env.DATABASE_PATH ?? "./data/sorasaki.db";
+  const dbPath = config.database.path;
   const dir = path.dirname(dbPath);
   fs.mkdirSync(dir, { recursive: true });
 

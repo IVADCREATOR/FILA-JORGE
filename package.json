@@ -1,6 +1,6 @@
 {
-  "name": "sorasaki-db",
-  "version": "0.1.0",
+  "name": "sorasaki-core",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,10 +8,13 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "migrate": "tsx src/database/sqlite/migrate.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "create-admin": "tsx scripts/create-admin.ts",
+    "create-application": "tsx scripts/create-application.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^9.4.0",
+    "@fastify/cors": "^9.0.1",
     "argon2": "^0.41.1",
     "better-sqlite3": "^11.3.0",
     "fastify": "^4.28.1",
